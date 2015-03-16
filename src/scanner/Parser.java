@@ -13,7 +13,12 @@ public class Parser
     private int next = 0;
     private Token currentToken;
 
-    private String output;
+    private String output = "";
+
+    public String getOutput()
+    {
+        return output;
+    }
 
     public void parse(ArrayList<Token> tokens)
     {
@@ -22,156 +27,150 @@ public class Parser
         prod();
     }
 
-    private void prod()
+    private boolean checkToken(int tokenType)
     {
-        prim();
-
-        currentToken = tokens.get(next++);
-        if (currentToken.getType() == Token.Type.DEF)
-        {
-            currentToken = tokens.get(next++);
-            expr();
-            output = String.format("%s%s", output, Token.Type.DEF);
-        }
-        else
-        {
-            throw new Error("Error de sintaxis. Se esperaba: ::=");
-        }
-
-        if (currentToken.getType() != Token.Type.END)
-        {
-            throw new Error
-            (   String.format
-                (   "Error de sintaxis. Se esperaba: %s",
-                    (char) Token.Type.END
-                )
-            );
-        }
-    }
-
-    private void expr()
-    {
-        term();
-
-        if (currentToken.getType() == Token.Type.OR)
-        {
-            output = String.format("%s%s", output, Token.Type.OR);
-        }
-        else
-        {
-            throw new Error
-            (   String.format
-                (   "Error de sintaxis. Se esperaba: %s",
-                    (char) Token.Type.OR
-                )
-            );
-        }
-    }
-
-    private void term()
-    {
-        fact();
-
-        if (currentToken.getType() == Token.Type.AND)
-        {
-            output = String.format("%s%s", output, Token.Type.AND);
-        }
-        else
-        {
-            throw new Error
-            (   String.format
-                (   "Error de sintaxis. So tiene: %s ~~~ Se esperaba: %s",
-                    currentToken.getData(), (char) Token.Type.AND
-                )
-            );
-        }
-    }
-
-    private void fact()
-    {
-        if (currentToken.getType() == Token.Type.LBC)
-        {
-            currentToken = tokens.get(next++);
-
-            expr();
-
-            if (currentToken.getType() == Token.Type.RBC)
-            {
-                output = String.format("%s%s", output, currentToken.getData());
-            }
-            else
-            {
-                throw new Error
-                (   String.format
-                    (   "Error de sintaxis. Se esperaba: %s",
-                        (char) Token.Type.RBC
-                    )
-                );
-            }
-        }
-        else if (currentToken.getType() == Token.Type.LBK)
-        {
-            currentToken = tokens.get(next++);
-
-            expr();
-
-            if (currentToken.getType() == Token.Type.RBK)
-            {
-                output = String.format("%s%s", output, currentToken.getData());
-            }
-            else
-            {
-                throw new Error
-                (   String.format
-                    (   "Error de sintaxis. Se esperaba: %s",
-                        (char) Token.Type.RBK
-                    )
-                );
-            }
-        }
-        else
-        {
-            prim();
-        }
-    }
-
-    private void prim()
-    {
-        if (currentToken.getType() == Token.Type.LPS)
-        {
-            currentToken = tokens.get(next++);
-
-            expr();
-
-            if (currentToken.getType() == Token.Type.RPS)
-            {
-                output = String.format("%s%s", output, currentToken.getData());
-            }
-            else
-            {
-                throw new Error
-                (   String.format
-                    (   "Error de sintaxis. Se esperaba: %s",
-                        (char) Token.Type.RPS
-                    )
-                );
-            }
-        }
-        else if (currentToken.getType() == Token.Type.VAR
-              || currentToken.getType() == Token.Type.TERML)
+        if (currentToken.getType() == tokenType)
         {
             output = String.format("%s%s", output, currentToken.getData());
+            currentToken = tokens.get(next++);
+            return true;
+        }
+
+        currentToken = tokens.get(next++);
+
+        return false;
+    }
+
+    private boolean prod()
+    {
+        return checkToken(Token.Type.VAR) && checkToken(Token.Type.DEF) && expr() && checkToken(Token.Type.END);
+    }
+
+    private boolean expr()
+    {
+        int save = next - 1;
+        if (expr2() == true)
+        {
+            return true;
         }
         else
         {
-            throw new Error
-            (   "Error de sintaxis. Se esperaba: '(' || 'VAR' || 'TERML'."
-            );
+            next = save;
+            currentToken = tokens.get(next++);
+            return expr1();
         }
     }
 
-    public String getOutput()
+    private boolean expr1()
     {
-        return output;
+        return expr() && checkToken(Token.Type.OR) && term();
+    }
+
+    private boolean expr2()
+    {
+        return term();
+    }
+
+    private boolean term()
+    {
+        int save = next - 1;
+        if (term2() == true)
+        {
+            return true;
+        }
+        else
+        {
+            next = save;
+            currentToken = tokens.get(next++);
+            return term1();
+        }
+    }
+
+    private boolean term1()
+    {
+        return term() && checkToken(Token.Type.AND) && fact();
+    }
+
+    private boolean term2()
+    {
+        return fact();
+    }
+
+    private boolean fact()
+    {
+        int save = next - 1;
+        if (fact3() == true)
+        {
+            return true;
+        }
+        else
+        {
+            next = save;
+            currentToken = tokens.get(next++);
+            if (fact2() == true)
+            {
+                return true;
+            }
+            else
+            {
+                next = save;
+                currentToken = tokens.get(next++);
+                return fact1();
+            }
+        }
+    }
+
+    private boolean fact1()
+    {
+        return checkToken(Token.Type.LBC) && expr() && checkToken(Token.Type.RBC);
+    }
+
+    private boolean fact2()
+    {
+        return checkToken(Token.Type.LBK) && expr() && checkToken(Token.Type.RBK);
+    }
+
+    private boolean fact3()
+    {
+        return prim();
+    }
+
+    private boolean prim()
+    {
+        int save = next - 1;
+        if  (prim3() == true)
+        {
+            return true;
+        }
+        else
+        {
+            next = save;
+            currentToken = tokens.get(next++);
+            if (prim2() == true)
+            {
+                return true;
+            }
+            else
+            {
+                next = save;
+                currentToken = tokens.get(next++);
+                return prim1();
+            }
+        }
+    }
+
+    private boolean prim1()
+    {
+        return checkToken(Token.Type.LPS) && expr() && checkToken(Token.Type.RPS);
+    }
+
+    private boolean prim2()
+    {
+        return checkToken(Token.Type.VAR);
+    }
+
+    private boolean prim3()
+    {
+        return checkToken(Token.Type.TERML);
     }
 }
