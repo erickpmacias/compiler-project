@@ -36,8 +36,6 @@ public class Parser
             return true;
         }
 
-        currentToken = tokens.get(next++);
-
         return false;
     }
 
@@ -48,17 +46,7 @@ public class Parser
 
     private boolean expr()
     {
-        int save = next - 1;
-        if (expr2() == true)
-        {
-            return true;
-        }
-        else
-        {
-            next = save;
-            currentToken = tokens.get(next++);
-            return expr1();
-        }
+        return expr1() || expr2();
     }
 
     private boolean expr1()
@@ -73,17 +61,7 @@ public class Parser
 
     private boolean term()
     {
-        int save = next - 1;
-        if (term2() == true)
-        {
-            return true;
-        }
-        else
-        {
-            next = save;
-            currentToken = tokens.get(next++);
-            return term1();
-        }
+        return term1() || term2();
     }
 
     private boolean term1()
@@ -98,26 +76,7 @@ public class Parser
 
     private boolean fact()
     {
-        int save = next - 1;
-        if (fact3() == true)
-        {
-            return true;
-        }
-        else
-        {
-            next = save;
-            currentToken = tokens.get(next++);
-            if (fact2() == true)
-            {
-                return true;
-            }
-            else
-            {
-                next = save;
-                currentToken = tokens.get(next++);
-                return fact1();
-            }
-        }
+        return fact1() || fact2() || fact3();
     }
 
     private boolean fact1()
@@ -137,26 +96,7 @@ public class Parser
 
     private boolean prim()
     {
-        int save = next - 1;
-        if  (prim3() == true)
-        {
-            return true;
-        }
-        else
-        {
-            next = save;
-            currentToken = tokens.get(next++);
-            if (prim2() == true)
-            {
-                return true;
-            }
-            else
-            {
-                next = save;
-                currentToken = tokens.get(next++);
-                return prim1();
-            }
-        }
+        return prim1() || prim2() || prim3();
     }
 
     private boolean prim1()
