@@ -1,18 +1,9 @@
 package scanner;
 
+import java.io.*;
+
 /**
  * Clase principal del analizador.
- *
- * Semantica del lenguaje:
- * <ul>
- *     <li>prog - conj</li>
- *     <li>conj - conj | prod</li>
- *     <li>prod - var DEF expr;</li>
- *     <li>expr - expr ALT term | term</li>
- *     <li>term - term & fact | fact</li>
- *     <li>fact - {expr} | [expr] | prim</li>
- *     <li>prim - (expr) | var | term</li>
- * </ul>
  *
  * @author Mario
  * @version 1.0
@@ -21,18 +12,69 @@ package scanner;
 public class Scanner
 {
     /**
+     * Analiza la expresion de entrada.
+     *
      * @param args the command line arguments
      */
     public static void main(String[] args)
     {
         Parser parser = new Parser();
-        parser.parse
-        (   Lexer.getTokens
-            (
-"<Entero>::={{['+'|'-']&<Variable1>}&(['+'|'-'])&{<Variable2>}}&{['+'|'-']&<Variable3>};"
-            )
-        );
+        if (parser.parse(Lexer.getTokens(getInputFrom("input"))) == true)
+        {
+            System.out.println("Analisis realizado con exito!");
+        }
+        else
+        {
+            System.out.println("Ocurrio un error durante el analisis!");
+        }
 
-        System.out.println(parser.getOutput());
+        System.out.println(String.format("Resultados: %s", parser.getOutput()));
+    }
+
+    /**
+     * Obtiene la cadena de caracteres de un archivo.
+     *
+     * @param file Nombre del archivo.
+     * @return Cadena de caracteres.
+     */
+    private static String getInputFrom(String file)
+    {
+        String text = "";
+        FileReader rfile = null;
+        String line = "";
+
+        try
+        {
+            rfile = new FileReader(file);
+            BufferedReader buff = new BufferedReader(rfile);
+            while ((line = buff.readLine()) != null)
+            {
+                text = String.format("%s%s", text, line);
+            }
+        }
+        catch (FileNotFoundException ex)
+        {
+            throw new RuntimeException("Archivo no encontrado!");
+        }
+        catch (IOException ex)
+        {
+            throw new RuntimeException("Error de entrada/saladia!");
+        }
+        finally
+        {
+            if (rfile != null)
+            {
+                try
+                {
+                    rfile.close();
+                }
+                catch (IOException ex)
+                {
+                    throw new RuntimeException("Error al cerrar el archivo!");
+                }
+            }
+        }
+
+        return text;
     }
 }
